@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>时量补语 · Trò chơi Bổ ngữ thời lượng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16213E;
+    --ink-2:#1E2C52;
+    --gold:#F2B705;
+    --gold-soft:#FFD866;
+    --jade:#2FBF71;
+    --coral:#FF6B6B;
+    --cream:#FFF8EC;
+    --cream-2:#FFF1D6;
+    --paper:#FFFDF8;
+    --muted:#8A93B8;
+    --radius:20px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 12% 8%, #24356b 0%, transparent 40%),
+      radial-gradient(circle at 90% 85%, #2a3a6e 0%, transparent 45%),
+      linear-gradient(160deg, var(--ink) 0%, var(--ink-2) 60%, #10182f 100%);
+    font-family:'Nunito', -apple-system, sans-serif;
+    color:var(--cream);
+    display:flex;
+    justify-content:center;
+    padding:20px 12px 40px;
+  }
+  .app{width:100%;max-width:560px;}
+  h1,h2,h3{font-family:'Baloo 2', 'Nunito', sans-serif; margin:0;}
+  .hanzi{font-family:'Noto Sans SC','Baloo 2',sans-serif;}
+
+  /* ---------- Screens ---------- */
+  .screen{display:none;}
+  .screen.active{display:block; animation:fadeUp .45s ease;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ---------- Header / Brand ---------- */
+  .brand{text-align:center; margin-bottom:18px;}
+  .brand-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:78px; height:78px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--gold-soft), var(--gold) 70%);
+    box-shadow:0 8px 24px rgba(242,183,5,.35);
+    font-size:34px; font-weight:900; color:var(--ink); font-family:'Noto Sans SC',sans-serif;
+    margin-bottom:10px;
+  }
+  .brand h1{font-size:clamp(22px,6vw,28px); color:var(--cream); letter-spacing:.3px;}
+  .brand .sub{color:var(--gold-soft); font-weight:700; font-size:14px; margin-top:4px;}
+  .brand .zh{font-family:'Noto Sans SC',sans-serif; font-size:15px; color:var(--muted); margin-top:2px;}
+
+  /* ---------- Card ---------- */
+  .card{
+    background:var(--paper);
+    color:#2A2F45;
+    border-radius:var(--radius);
+    padding:22px 20px;
+    box-shadow:0 14px 34px rgba(0,0,0,.28);
+    margin-bottom:16px;
+  }
+  .rules-card{background:var(--cream-2); border:2px dashed #E7B93F;}
+  .rules-title{font-weight:800; font-size:15px; color:#8A5A00; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+  .rules-list{margin:0; padding-left:0; list-style:none; display:grid; gap:8px;}
+  .rules-list li{
+    background:var(--paper); border-radius:12px; padding:9px 12px; font-size:13.5px; line-height:1.4;
+    display:flex; gap:8px; align-items:flex-start; color:#4A4230;
+  }
+  .rules-list li b{color:#8A5A00; font-family:'Noto Sans SC',sans-serif;}
+  .tag{
+    display:inline-block; background:var(--ink); color:var(--gold-soft); font-size:11px; font-weight:800;
+    padding:2px 8px; border-radius:20px; flex-shrink:0; margin-top:1px;
+  }
+
+  input[type=text]{
+    width:100%; padding:14px 16px; border-radius:14px; border:2px solid #E5DDC8;
+    font-size:16px; font-family:'Nunito',sans-serif; font-weight:700; color:#2A2F45;
+    background:#fff; outline:none; transition:border .2s;
+  }
+  input[type=text]:focus{border-color:var(--gold);}
+  label.field-label{font-weight:800; font-size:13px; color:var(--gold-soft); display:block; margin:4px 0 8px;}
+
+  .btn{
+    width:100%; border:none; cursor:pointer; border-radius:16px; padding:15px 18px;
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:17px; letter-spacing:.2px;
+    transition:transform .12s ease, box-shadow .12s ease; -webkit-tap-highlight-color:transparent;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:linear-gradient(135deg, var(--gold-soft), var(--gold)); color:#3A2A00; box-shadow:0 10px 22px rgba(242,183,5,.35);}
+  .btn-ghost{background:transparent; color:var(--cream); border:2px solid rgba(255,255,255,.25); margin-top:10px;}
+  .btn-secondary{background:#2A3766; color:var(--cream); margin-top:10px;}
+
+  /* ---------- Quiz header: time-dial ---------- */
+  .quiz-top{display:flex; align-items:center; gap:14px; margin-bottom:16px;}
+  .dial-wrap{position:relative; width:64px; height:64px; flex-shrink:0;}
+  .dial-wrap svg{transform:rotate(-90deg);}
+  .dial-bg{fill:none; stroke:rgba(255,255,255,.12); stroke-width:6;}
+  .dial-fg{fill:none; stroke:url(#dialGrad); stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset .5s ease;}
+  .dial-center{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:13px; color:var(--gold-soft);
+  }
+  .quiz-meta{flex:1; min-width:0;}
+  .quiz-meta .qname{font-weight:800; font-size:14px; color:var(--cream); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .quiz-meta .qstats{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .quiz-meta .qstats span.ok{color:var(--jade); font-weight:800;}
+  .quiz-meta .qstats span.bad{color:var(--coral); font-weight:800;}
+
+  .progress-track{height:8px; background:rgba(255,255,255,.12); border-radius:8px; overflow:hidden; margin-bottom:16px;}
+  .progress-fill{height:100%; background:linear-gradient(90deg, var(--gold), var(--jade)); width:0%; transition:width .4s ease;}
+
+  /* ---------- Question card ---------- */
+  .q-type-badge{
+    display:inline-block; font-size:11px; font-weight:800; color:var(--ink);
+    background:var(--gold-soft); padding:3px 10px; border-radius:20px; margin-bottom:10px;
+  }
+  .q-prompt{font-size:15.5px; font-weight:700; color:#2A2F45; line-height:1.5; margin-bottom:6px;}
+  .q-sentence{
+    font-family:'Noto Sans SC',sans-serif; font-size:clamp(20px,6vw,25px); font-weight:700;
+    color:#16213E; background:var(--cream); border-radius:14px; padding:16px; text-align:center;
+    margin:12px 0; line-height:1.6; word-break:break-word;
+  }
+  .q-vn{font-size:13px; color:#8890AC; font-style:italic; margin-bottom:10px;}
+
+  /* choice options */
+  .choice-list{display:grid; gap:10px; margin-top:14px;}
+  .choice-item{
+    text-align:left; background:#fff; border:2px solid #EDE7D6; border-radius:14px; padding:13px 14px;
+    font-family:'Noto Sans SC',sans-serif; font-size:16px; color:#2A2F45; cursor:pointer;
+    display:flex; gap:10px; align-items:center; transition:border .15s, background .15s;
+  }
+  .choice-item .letter{
+    flex-shrink:0; width:26px; height:26px; border-radius:50%; background:var(--cream-2);
+    display:flex; align-items:center; justify-content:center; font-family:'Nunito',sans-serif;
+    font-weight:800; font-size:13px; color:#8A5A00;
+  }
+  .choice-item:hover{border-color:var(--gold);}
+  .choice-item.correct{background:#E8FBF1; border-color:var(--jade);}
+  .choice-item.wrong{background:#FFECEC; border-color:var(--coral);}
+  .choice-item.disabled{pointer-events:none;}
+
+  /* build (word order) */
+  .build-answer{
+    min-height:64px; background:var(--cream); border:2px dashed #D8CBA0; border-radius:14px;
+    padding:10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:14px 0 10px;
+  }
+  .build-answer .placeholder{color:#B4A97F; font-size:13px; font-style:italic; margin:auto;}
+  .chip{
+    font-family:'Noto Sans SC',sans-serif; font-size:17px; font-weight:700; color:#16213E;
+    background:#fff; border:2px solid #E5DDC8; border-radius:10px; padding:7px 12px; cursor:pointer;
+    transition:transform .12s;
+  }
+  .chip:active{transform:scale(.94);}
+  .chip-bank{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+  .chip-used{opacity:.25; pointer-events:none;}
+  .chip.in-answer{background:var(--ink); color:var(--cream-2); border-color:var(--ink);}
+  .build-tools{display:flex; gap:8px; margin-top:4px;}
+  .btn-mini{
+    flex:1; background:#EFE9D8; border:none; border-radius:10px; padding:9px; font-weight:800;
+    font-family:'Nunito',sans-serif; font-size:12.5px; color:#6B6142; cursor:pointer;
+  }
+
+  .submit-row{margin-top:16px;}
+
+  /* ---------- Feedback ---------- */
+  .feedback{
+    border-radius:16px; padding:16px; margin-top:14px; display:none; animation:fadeUp .3s ease;
+  }
+  .feedback.show{display:block;}
+  .feedback.ok{background:#E8FBF1; border:2px solid var(--jade);}
+  .feedback.bad{background:#FFF0EE; border:2px solid var(--coral);}
+  .feedback-head{display:flex; align-items:center; gap:8px; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:16px;}
+  .feedback.ok .feedback-head{color:#1E9E5C;}
+  .feedback.bad .feedback-head{color:#E14848;}
+  .feedback-body{margin-top:8px; font-size:14px; line-height:1.55; color:#3A3F55;}
+  .feedback-body .correct-sentence{
+    font-family:'Noto Sans SC',sans-serif; font-weight:700; color:#16213E; font-size:16px;
+    display:block; margin-top:6px; background:#fff; border-radius:10px; padding:8px 10px;
+  }
+
+  /* ---------- Result screen ---------- */
+  .result-hero{text-align:center; padding:26px 20px;}
+  .result-hero .medal{font-size:52px; margin-bottom:6px;}
+  .result-hero h2{font-size:22px; color:#2A2F45;}
+  .result-hero .name{color:#8A5A00;}
+  .score-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:18px 0;}
+  .score-box{background:var(--cream-2); border-radius:14px; padding:12px 6px; text-align:center;}
+  .score-box .num{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:22px; color:#16213E;}
+  .score-box .lbl{font-size:11px; color:#8A7A4E; font-weight:700; margin-top:2px;}
+  .grade-pill{
+    display:inline-block; margin-top:6px; padding:8px 18px; border-radius:30px; font-weight:800;
+    font-family:'Baloo 2',sans-serif; font-size:14px;
+  }
+  .grade-great{background:#E8FBF1; color:#1E9E5C;}
+  .grade-good{background:#FFF6DE; color:#B8860B;}
+  .grade-ok{background:#FFEEDB; color:#C56A16;}
+  .grade-low{background:#FFEDED; color:#D64545;}
+
+  .review-item{
+    background:#fff; border:2px solid #EDE7D6; border-radius:14px; padding:14px; margin-bottom:10px;
+  }
+  .review-item .num{font-size:11px; font-weight:800; color:#B4A97F; margin-bottom:4px;}
+  .review-item .qtxt{font-size:13.5px; font-weight:700; color:#2A2F45; margin-bottom:8px;}
+  .review-item .rows{font-size:13px; line-height:1.6;}
+  .review-item .rows .you{color:#D64545;}
+  .review-item .rows .right{color:#1E9E5C;}
+  .review-item .expl{margin-top:6px; font-size:12.5px; color:#6B7290; font-style:italic;}
+  #reviewList{display:none;}
+  #reviewList.show{display:block; margin-top:12px;}
+
+  .footer-note{text-align:center; color:var(--muted); font-size:11.5px; margin-top:18px; line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="brand">
+    <div class="brand-badge">时</div>
+    <h1>Bổ ngữ thời lượng</h1>
+    <div class="zh hanzi">时量补语</div>
+    <div class="sub">Trò chơi luyện ngữ pháp · HSK2</div>
+  </div>
+
+  <!-- ============ SCREEN 1: START ============ -->
+  <div class="screen active" id="screen-start">
+    <div class="card rules-card">
+      <div class="rules-title">📌 Ghi nhớ nhanh: 时量补语 = hành động kéo dài bao lâu</div>
+      <ul class="rules-list">
+        <li><span class="tag hanzi">V + t.lượng</span> Không tân ngữ: <b class="hanzi">我们休息十分钟。</b></li>
+        <li><span class="tag hanzi">V+了+t.lượng+O</span> Tân ngữ là <b>sự vật</b> → đứng sau: <b class="hanzi">我学了两小时汉语。</b></li>
+        <li><span class="tag hanzi">V+了+O+t.lượng</span> Tân ngữ là <b>người</b> → đứng trước: <b class="hanzi">李文等了她一个小时。</b></li>
+        <li><span class="tag hanzi">V+O+V+了+t.lượng</span> Lặp động từ: <b class="hanzi">他学中文学了两年。</b></li>
+        <li><span class="tag hanzi">离合词</span> Động từ ly hợp: <b class="hanzi">跑步跑了两个小时。</b></li>
+        <li><span class="tag hanzi">V+了…了</span> Vẫn đang tiếp tục đến giờ: <b class="hanzi">他写了半小时汉字了。</b></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <label class="field-label">✏️ Tên của bạn</label>
+      <input type="text" id="playerName" placeholder="Nhập tên để bắt đầu..." maxlength="24">
+    </div>
+
+    <button class="btn btn-primary" id="startBtn">🎮 Bắt đầu chơi</button>
+    <div class="footer-note">22 câu hỏi · nhiều dạng bài · trộn ngẫu nhiên<br>Không chấm sai vì dấu câu</div>
+  </div>
+
+  <!-- ============ SCREEN 2: QUIZ ============ -->
+  <div class="screen" id="screen-quiz">
+    <div class="quiz-top">
+      <div class="dial-wrap">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <defs>
+            <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FFD866"/>
+              <stop offset="100%" stop-color="#2FBF71"/>
+            </linearGradient>
+          </defs>
+          <circle class="dial-bg" cx="32" cy="32" r="27"></circle>
+          <circle class="dial-fg" id="dialFg" cx="32" cy="32" r="27" stroke-dasharray="169.6" stroke-dashoffset="169.6"></circle>
+        </svg>
+        <div class="dial-center" id="dialCenter">1/22</div>
+      </div>
+      <div class="quiz-meta">
+        <div class="qname" id="qPlayerName">Học sinh</div>
+        <div class="qstats"><span class="ok" id="statOk">0</span> đúng · <span class="bad" id="statBad">0</span> sai</div>
+      </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="card" id="questionCard">
+      <div class="q-type-badge" id="qBadge">Dạng bài</div>
+      <div class="q-prompt" id="qPrompt">...</div>
+      <div id="qSentenceWrap"></div>
+      <div id="answerArea"></div>
+      <div class="submit-row" id="submitRow" style="display:none;">
+        <button class="btn btn-secondary" id="submitBuildBtn">✅ Kiểm tra đáp án</button>
+      </div>
+      <div class="feedback" id="feedback">
+        <div class="feedback-head" id="feedbackHead"></div>
+        <div class="feedback-body" id="feedbackBody"></div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="nextBtn" style="display:none;">Câu tiếp theo →</button>
+  </div>
+
+  <!-- ============ SCREEN 3: RESULT ============ -->
+  <div class="screen" id="screen-result">
+    <div class="card result-hero">
+      <div class="medal" id="resultMedal">🏆</div>
+      <h2>Chúc mừng <span class="name" id="resultName">bạn</span>!</h2>
+      <div id="gradePill"></div>
+      <div class="score-grid">
+        <div class="score-box"><div class="num" id="rCorrect">0</div><div class="lbl">CÂU ĐÚNG</div></div>
+        <div class="score-box"><div class="num" id="rWrong">0</div><div class="lbl">CÂU SAI</div></div>
+        <div class="score-box"><div class="num" id="rScore">0</div><div class="lbl">ĐIỂM /10</div></div>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary" id="reviewBtn">📖 Xem lại câu sai</button>
+    <div id="reviewList"></div>
+    <button class="btn btn-primary" id="restartBtn" style="margin-top:14px;">🔁 Làm lại</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     QUESTION BANK
+     type: "choice" | "build"
+     For "choice": options[] with correct:true on the right one
+     For "build":  correctWords[] is the sentence in correct order;
+                    displayed shuffled, user rebuilds order by tapping.
+  ============================================================ */
+  const QUESTIONS = [
+    {
+      type:"build",
+      badge:"Xếp từ thành câu",
+      prompt:"Sắp xếp các từ dưới đây thành câu đúng:",
+      correctWords:["我","学","了","两个小时","汉语"],
+      vn:"Tôi đã học tiếng Hán 2 tiếng.",
+      explain:"Tân ngữ <b class=\"hanzi\">汉语</b> là <b>sự vật</b> nên bổ ngữ thời lượng đứng <b>trước</b> tân ngữ: S + V + 了 + thời lượng + O."
+    },
+    {
+      type:"choice",
+      badge:"Chọn câu đúng",
+      prompt:"Câu nào dưới đây đúng ngữ pháp?",
+      options:[
+        {text:"我看书了一个下午。", correct:false},
+        {text:"我看了一个下午书。", correct:true},
+        {text:"我一个下午看了书。", correct:false}
+      ],
+      explain:"Tân ngữ <b class=\"hanzi\">书</b> là sự vật → S + V + 了 + thời lượng + O: <b class=\"hanzi\">我看了一个下午书。</b>"
+    },
+    {
+      type:"choice",
+      badge:"Điền vào chỗ trống",
+      prompt:"他看了 ______ 电视。",
+      options:[
+        {text:"一个晚上", correct:true},
+        {text:"电视一个晚上", correct:false},
+        {text:"一个晚上了电视", correct:false}
+      ],
+      explain:"Ô trống là bổ ngữ thời lượng, đứng ngay sau động từ + 了 và trước tân ngữ sự vật: <b class=\"hanzi\">他看了一个晚上电视。</b>"
+    },
+    {
+      type:"build",
+      badge:"Xếp từ thành câu",
+      prompt:"Sắp xếp các từ dưới đây thành câu đúng:",
+      correctWords:["李文","等","了","她","一个小时"],
+      vn:"Lý Văn đã đợi cô ấy 1 tiếng.",
+      explain:"Tân ngữ <b class=\"hanzi\">她</b> là <b>người</b> nên phải đứng <b>trước</b> bổ ngữ thời lượng: S + V + 了 + người + thời lượng."
+    },
+    {
+      type:"choice",
+      badge:"Chọn câu đúng",
+      prompt:"Câu nào dưới đây đúng ngữ pháp?",
+      options:[
+        {text:"我等了他半个小时。", correct:true},
+        {text:"我等了半个小时他。", correct:false}
+      ],
+      explain:"<b class=\"hanzi\">他</b> là người → người đứng trước thời lượng: <b class=\"hanzi\">我等了他半个小时。</b>"
+    },
+    {
+      type:"choice",
+      badge:"Điền vào chỗ trống",
+      prompt:"老师等了 ______ 十分钟。",
+      options:[
+        {text:"我们", correct:true},
+        {text:"我们十分钟", correct:false},
+        {text:"十分钟我们", correct:false}
+      ],
+      explain:"Tân ngữ người <b class=\"hanzi\">我们</b> điền ngay sau 了, trước thời lượng: <b class=\"hanzi\">老师等了我们十分钟。</b>"
+    },
+    {
+      type:"build",
+      badge:"Xếp từ thành câu",
+      prompt:"Sắp xếp các từ dưới đây thành câu đúng:",
+      correctWords:["他们","学","中文","学","了","两年"],
+      vn:"Họ đã học tiếng Trung được 2 năm.",
+      explain:"Khi có tân ngữ, có thể lặp lại động từ: S + V + O + V + 了 + thời lượng."
+    },
+    {
+      type:"choice",
+      badge:"Chọn câu đúng",
+      prompt:"Câu nào dưới đây đúng ngữ pháp?",
+      options:[
+        {text:"我学汉语学了两年。", correct:true},
+        {text:"我学了两年学汉语。", correct:false},
+        {text:"我汉语学了两年学。", correct:false}
+      ],
+      explain:"Cấu trúc lặp động từ: S + V + O + V + 了 + thời lượng: <b class=\"hanzi\">我学汉语学了两年。</b>"
+    },
+    {
+      type:"build",
+      badge:"Xếp từ thành câu (离合词)",
+      prompt:"Sắp xếp các từ dưới đây thành câu đúng:",
+      correctWords:["安妮","游泳","游","了","一个下午"],
+      vn:"Annie đã bơi cả một buổi chiều.",
+      explain:"<b class=\"hanzi\">游泳</b> là động từ ly hợp → lặp lại phần động từ: VO + V + 了 + thời lượng."
+    },
+    {
+      type:"build",
+      badge:"Xếp từ thành câu (离合词)",
+      prompt:"Sắp xếp các từ dưới đây thành câu đúng:",
+      correctWords:["陈天中","跑步","跑","了","两个小时"],
+      vn:"Trần Thiên Trung đã chạy bộ 2 tiếng.",
+      explain:"<b class=\"hanzi\">跑步</b> là động từ ly hợp → lặp lại phần động từ: VO + V + 了 + thời lượng."
+    },
+    {
+      type:"choice",
+      badge:"Động từ ly hợp",
+      prompt:"Câu nào dưới đây đúng ngữ pháp?",
+      options:[
+        {text:"他跑了两个小时步。", correct:false},
+        {text:"他跑步跑了两个小时。", correct:true},
+        {text:"他两个小时跑步了。", correct:false}
+      ],
+      explain:"Với động từ ly hợp <b class=\"hanzi\">跑步</b>, cách tự nhiên nhất là lặp động từ: <b class=\"hanzi\">他跑步跑了两个小时。</b>"
+    },
+    {
+      type:"choice",
+      badge:"Động từ ly hợp",
+      prompt:"Câu nào dưới đây đúng ngữ pháp?",
+      options:[
+        {text:"她睡觉睡了八个小时。", correct:true},
+        {text:"她睡了八个小时觉觉。", correct:false},
+        {text:"她八个小时睡觉。", correct:false}
+      ],
+      explain:"<b class=\"hanzi\">睡觉</b> là động từ ly hợp → lặp động từ: <b class=\"hanzi\">她睡觉睡了八个小时。</b>"
+    },
+    {
+      type:"choice",
+      badge:"Điền vào chỗ trống",
+      prompt:"安妮游泳 ______ 一个下午。",
+      options:[
+        {text:"游了", correct:true},
+        {text:"了游", correct:false},
+        {text:"游泳了", correct:false}
+      ],
+      explain:"Sau <b class=\"hanzi\">游泳</b>, lặp lại động từ rồi mới thêm 了: <b class=\"hanzi\">安妮游泳游了一个下午。</b>"
+    },
+    {
+      type:"build",
+      badge:"Xếp từ thành câu (cơ bản)",
+      prompt:"Sắp xếp các từ dưới đây thành câu đúng:",
+      correctWords:["他们","学","了","两年"],
+      vn:"Họ đã học 2 năm.",
+      explain:"Không có tân ngữ → cấu trúc cơ bản: S + V + 了 + thời lượng."
+    },
+    {
+      type:"build",
+      badge:"Xếp từ thành câu (cơ bản)",
+      prompt:"Sắp xếp các từ dưới đây thành câu đúng:",
+      correctWords:["我们","休息","十分钟"],
+      vn:"Chúng tôi nghỉ 10 phút.",
+      explain:"Cấu trúc cơ bản, không tân ngữ: S + V + thời lượng."
+    },
+    {
+      type:"choice",
+      badge:"Điền vào chỗ trống",
+      prompt:"走 ______ 就到了。",
+      options:[
+        {text:"半个多小时", correct:true},
+        {text:"多半个小时", correct:false},
+        {text:"半个小时多", correct:false}
+      ],
+      explain:"Diễn tả 'hơn nửa tiếng', đúng thứ tự là <b class=\"hanzi\">半个多小时</b>."
+    },
+    {
+      type:"choice",
+      badge:"Phân biệt người / sự vật",
+      prompt:"我看了两个小时 ______。",
+      options:[
+        {text:"他", correct:false},
+        {text:"电视", correct:true},
+        {text:"小王", correct:false}
+      ],
+      explain:"Vì thời lượng đứng trước, tân ngữ theo sau chỉ có thể là <b>sự vật</b> (không phải người): <b class=\"hanzi\">电视</b>."
+    },
+    {
+      type:"choice",
+      badge:"Phân biệt người / sự vật",
+      prompt:"Câu nào dưới đây đúng ngữ pháp?",
+      options:[
+        {text:"我等了两个小时他。", correct:false},
+        {text:"我等了他两个小时。", correct:true}
+      ],
+      explain:"Tân ngữ là người → người đứng trước bổ ngữ thời lượng: <b class=\"hanzi\">我等了他两个小时。</b>"
+    },
+    {
+      type:"choice",
+      badge:"Hành động còn tiếp tục?",
+      prompt:"Xem câu sau: 「他写了半个小时汉字了。」 Bây giờ anh ấy còn đang viết chữ Hán không?",
+      options:[
+        {text:"还在写。 (Vẫn đang viết)", correct:true},
+        {text:"已经不写了。 (Đã ngừng viết)", correct:false}
+      ],
+      explain:"Cấu trúc <b class=\"hanzi\">V + 了 + thời lượng + 了</b> cho biết hành động đã kéo dài và <b>vẫn đang tiếp tục đến hiện tại</b>."
+    },
+    {
+      type:"choice",
+      badge:"Hành động còn tiếp tục?",
+      prompt:"Xem câu sau: 「陈天中跑步跑了两个小时了。」 Hành động hiện tại như thế nào?",
+      options:[
+        {text:"Vẫn đang tiếp tục.", correct:true},
+        {text:"Chắc chắn đã kết thúc.", correct:false}
+      ],
+      explain:"Có 了 ở cuối câu → hành động chạy bộ đã kéo dài 2 tiếng và <b>vẫn tiếp tục</b> đến bây giờ."
+    },
+    {
+      type:"choice",
+      badge:"Hành động còn tiếp tục?",
+      prompt:"Xem câu sau: 「我们学汉语学了两年了。」 Câu này nghĩa là gì?",
+      options:[
+        {text:"Hiện tại vẫn đang học.", correct:true},
+        {text:"Đã học xong, không học nữa.", correct:false}
+      ],
+      explain:"了 ở cuối câu báo hiệu hành động học tiếng Hán đã kéo dài 2 năm và <b>vẫn tiếp diễn</b>."
+    },
+    {
+      type:"choice",
+      badge:"Hành động còn tiếp tục?",
+      prompt:"Câu nào thể hiện hành động vẫn đang tiếp tục đến hiện tại?",
+      options:[
+        {text:"他写了半个小时汉字。", correct:false},
+        {text:"他写了半个小时汉字了。", correct:true}
+      ],
+      explain:"Chỉ câu có thêm 了 ở cuối (V+了+thời lượng+了) mới khẳng định hành động vẫn tiếp tục."
+    }
+  ];
+
+  /* ============================================================
+     STATE
+  ============================================================ */
+  let order = [];          // shuffled question indices for this session
+  let current = 0;
+  let correctCount = 0;
+  let wrongCount = 0;
+  let wrongLog = [];        // {q, yourAnswer, correctAnswer}
+  let playerName = "";
+  let answered = false;
+
+  // build-mode state
+  let buildBank = [];        // [{word, origin, used}]
+  let buildAnswer = [];      // array of origin indices in chosen order
+
+  /* ============================================================
+     HELPERS
+  ============================================================ */
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function normalizeZh(s){
+    // strip punctuation & whitespace so punctuation never causes a wrong mark
+    return s.replace(/[。，、！？\s]/g,"");
+  }
+
+  function show(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  /* ============================================================
+     START
+  ============================================================ */
+  document.getElementById("startBtn").addEventListener("click", function(){
+    const nameInput = document.getElementById("playerName").value.trim();
+    playerName = nameInput || "Học sinh";
+    order = shuffle(QUESTIONS.map((_,i)=>i));
+    current = 0; correctCount = 0; wrongCount = 0; wrongLog = [];
+    document.getElementById("qPlayerName").textContent = playerName;
+    show("screen-quiz");
+    renderQuestion();
+  });
+
+  /* ============================================================
+     RENDER QUESTION
+  ============================================================ */
+  function updateDial(){
+    const total = order.length;
+    const pct = current/total;
+    const circumference = 169.6;
+    const fg = document.getElementById("dialFg");
+    fg.style.strokeDashoffset = circumference - (pct*circumference);
+    document.getElementById("dialCenter").textContent = (current+1)+"/"+total;
+    document.getElementById("progressFill").style.width = (pct*100)+"%";
+    document.getElementById("statOk").textContent = correctCount;
+    document.getElementById("statBad").textContent = wrongCount;
+  }
+
+  function renderQuestion(){
+    answered = false;
+    const q = QUESTIONS[order[current]];
+    updateDial();
+
+    document.getElementById("qBadge").textContent = q.badge;
+    document.getElementById("qPrompt").innerHTML = q.prompt.replace(/\n/g,"<br>");
+    document.getElementById("feedback").className = "feedback";
+    document.getElementById("nextBtn").style.display = "none";
+    document.getElementById("submitRow").style.display = "none";
+    document.getElementById("qSentenceWrap").innerHTML = "";
+
+    const area = document.getElementById("answerArea");
+    area.innerHTML = "";
+
+    if(q.type === "choice"){
+      renderChoice(q, area);
+    } else if(q.type === "build"){
+      renderBuild(q, area);
+    }
+  }
+
+  function renderChoice(q, area){
+    const letters = ["A","B","C","D"];
+    const shuffledOptions = shuffle(q.options.map((o,i)=>({...o, origIndex:i})));
+    const list = document.createElement("div");
+    list.className = "choice-list";
+    shuffledOptions.forEach((opt, idx)=>{
+      const div = document.createElement("div");
+      div.className = "choice-item hanzi";
+      div.innerHTML = '<span class="letter">'+letters[idx]+'</span><span>'+opt.text+'</span>';
+      div.addEventListener("click", function(){
+        if(answered) return;
+        answered = true;
+        const isCorrect = !!opt.correct;
+        const correctOpt = shuffledOptions.find(o=>o.correct);
+        document.querySelectorAll(".choice-item").forEach(el=>el.classList.add("disabled"));
+        div.classList.add(isCorrect ? "correct" : "wrong");
+        if(!isCorrect){
+          const correctEl = list.children[shuffledOptions.indexOf(correctOpt)];
+          correctEl.classList.add("correct");
+        }
+        handleResult(isCorrect, q, opt.text, correctOpt.text);
+      });
+      list.appendChild(div);
+    });
+    area.appendChild(list);
+  }
+
+  function renderBuild(q, area){
+    buildBank = shuffle(q.correctWords.map((w,i)=>({word:w, origin:i, used:false})));
+    buildAnswer = [];
+
+    const vn = document.createElement("div");
+    vn.className = "q-vn";
+    vn.textContent = "💡 Gợi ý nghĩa: " + q.vn;
+    area.appendChild(vn);
+
+    const answerBox = document.createElement("div");
+    answerBox.className = "build-answer";
+    answerBox.id = "buildAnswerBox";
+    area.appendChild(answerBox);
+
+    const bank = document.createElement("div");
+    bank.className = "chip-bank";
+    bank.id = "buildBank";
+    area.appendChild(bank);
+
+    const tools = document.createElement("div");
+    tools.className = "build-tools";
+    tools.innerHTML = '<button class="btn-mini" id="undoChipBtn">↩️ Xóa từ cuối</button><button class="btn-mini" id="clearChipBtn">🗑️ Xóa hết</button>';
+    area.appendChild(tools);
+
+    document.getElementById("undoChipBtn").addEventListener("click", function(){
+      if(answered) return;
+      buildAnswer.pop();
+      renderBuildChips();
+    });
+    document.getElementById("clearChipBtn").addEventListener("click", function(){
+      if(answered) return;
+      buildAnswer = [];
+      renderBuildChips();
+    });
+
+    renderBuildChips();
+
+    document.getElementById("submitRow").style.display = "block";
+    document.getElementById("submitBuildBtn").onclick = function(){
+      if(answered) return;
+      if(buildAnswer.length !== q.correctWords.length){
+        return; // require full sentence
+      }
+      answered = true;
+      const chosenOrderText = buildAnswer.map(i=>q.correctWords[i]).join("");
+      const correctOrderText = q.correctWords.join("");
+      const isCorrect = normalizeZh(chosenOrderText) === normalizeZh(correctOrderText);
+      document.getElementById("submitRow").style.display = "none";
+      document.querySelectorAll(".chip").forEach(c=>c.style.pointerEvents="none");
+      handleResult(isCorrect, q, chosenOrderText+"。", correctOrderText+"。");
+    };
+  }
+
+  function renderBuildChips(){
+    const box = document.getElementById("buildAnswerBox");
+    const bank = document.getElementById("buildBank");
+    box.innerHTML = "";
+    bank.innerHTML = "";
+
+    if(buildAnswer.length === 0){
+      const ph = document.createElement("div");
+      ph.className = "placeholder";
+      ph.textContent = "Chạm vào các từ bên dưới theo đúng thứ tự...";
+      box.appendChild(ph);
+    } else {
+      buildAnswer.forEach(origIdx=>{
+        const chip = document.createElement("div");
+        chip.className = "chip in-answer hanzi";
+        chip.textContent = buildBank.find(b=>b.origin===origIdx).word;
+        chip.addEventListener("click", function(){
+          if(answered) return;
+          buildAnswer = buildAnswer.filter(i=>i!==origIdx);
+          renderBuildChips();
+        });
+        box.appendChild(chip);
+      });
+    }
+
+    buildBank.forEach(item=>{
+      const used = buildAnswer.includes(item.origin);
+      const chip = document.createElement("div");
+      chip.className = "chip hanzi" + (used ? " chip-used" : "");
+      chip.textContent = item.word;
+      chip.addEventListener("click", function(){
+        if(answered || used) return;
+        buildAnswer.push(item.origin);
+        renderBuildChips();
+      });
+      bank.appendChild(chip);
+    });
+  }
+
+  /* ============================================================
+     RESULT HANDLING
+  ============================================================ */
+  function handleResult(isCorrect, q, yourAnswerText, correctAnswerText){
+    if(isCorrect){ correctCount++; } else { wrongCount++; wrongLog.push({
+      prompt: q.prompt,
+      badge: q.badge,
+      your: yourAnswerText,
+      correct: correctAnswerText,
+      explain: q.explain
+    }); }
+    updateDial();
+
+    const fb = document.getElementById("feedback");
+    fb.className = "feedback show " + (isCorrect ? "ok" : "bad");
+    document.getElementById("feedbackHead").textContent = isCorrect ? "✅ Đúng rồi!" : "❌ Chưa đúng!";
+    let body = q.explain;
+    if(!isCorrect){
+      body += '<span class="correct-sentence hanzi">' + correctAnswerText + '</span>';
+    }
+    document.getElementById("feedbackBody").innerHTML = body;
+
+    document.getElementById("nextBtn").style.display = "block";
+  }
+
+  document.getElementById("nextBtn").addEventListener("click", function(){
+    current++;
+    if(current >= order.length){
+      renderResult();
+    } else {
+      renderQuestion();
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+  });
+
+  /* ============================================================
+     RESULT SCREEN
+  ============================================================ */
+  function renderResult(){
+    show("screen-result");
+    const total = order.length;
+    const pct = correctCount/total;
+    const score10 = (pct*10).toFixed(1);
+
+    document.getElementById("resultName").textContent = playerName;
+    document.getElementById("rCorrect").textContent = correctCount;
+    document.getElementById("rWrong").textContent = wrongCount;
+    document.getElementById("rScore").textContent = score10;
+
+    let grade, gradeClass, medal;
+    if(pct >= 0.9){ grade="Rất tốt!"; gradeClass="grade-great"; medal="🏆"; }
+    else if(pct >= 0.75){ grade="Khá tốt"; gradeClass="grade-good"; medal="🥈"; }
+    else if(pct >= 0.6){ grade="Cần luyện thêm"; gradeClass="grade-ok"; medal="🥉"; }
+    else { grade="Làm lại để nắm chắc ngữ pháp"; gradeClass="grade-low"; medal="📚"; }
+
+    document.getElementById("resultMedal").textContent = medal;
+    document.getElementById("gradePill").innerHTML = '<span class="grade-pill '+gradeClass+'">'+grade+'</span>';
+
+    const reviewList = document.getElementById("reviewList");
+    reviewList.innerHTML = "";
+    if(wrongLog.length === 0){
+      reviewList.innerHTML = '<div class="card" style="text-align:center; color:#1E9E5C; font-weight:800;">🎉 Không có câu sai nào — quá xuất sắc!</div>';
+    } else {
+      wrongLog.forEach((w, i)=>{
+        const div = document.createElement("div");
+        div.className = "review-item";
+        div.innerHTML =
+          '<div class="num">CÂU SAI '+(i+1)+' · '+w.badge+'</div>'+
+          '<div class="qtxt">'+w.prompt+'</div>'+
+          '<div class="rows hanzi">'+
+            '<div class="you">Bạn chọn: '+w.your+'</div>'+
+            '<div class="right">Đáp án đúng: '+w.correct+'</div>'+
+          '</div>'+
+          '<div class="expl">'+w.explain+'</div>';
+        reviewList.appendChild(div);
+      });
+    }
+  }
+
+  document.getElementById("reviewBtn").addEventListener("click", function(){
+    const rl = document.getElementById("reviewList");
+    rl.classList.toggle("show");
+    this.textContent = rl.classList.contains("show") ? "🔼 Ẩn câu sai" : "📖 Xem lại câu sai";
+  });
+
+  document.getElementById("restartBtn").addEventListener("click", function(){
+    document.getElementById("playerName").value = playerName === "Học sinh" ? "" : playerName;
+    document.getElementById("reviewList").classList.remove("show");
+    document.getElementById("reviewBtn").textContent = "📖 Xem lại câu sai";
+    show("screen-start");
+  });
+
+  // allow Enter key to start
+  document.getElementById("playerName").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ document.getElementById("startBtn").click(); }
+  });
+
+})();
+</script>
+</body>
+</html>
